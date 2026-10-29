@@ -1,6 +1,6 @@
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import Fastify from 'fastify';
+import Fastify, { type FastifyServerOptions } from 'fastify';
 import {
   jsonSchemaTransform,
   jsonSchemaTransformObject,
@@ -11,14 +11,26 @@ import { quotesRoutes } from './modules/quotes/quotes.routes.ts';
 import { zonesRoutes } from './modules/zones/zones.routes.ts';
 import { type Clock, systemClock } from './shared/clock.ts';
 import { registerErrorHandling } from './shared/error-handler.ts';
+import { buildInfo, parseEnv, type BuildInfo } from './shared/config.ts';
+import { createReadiness, type Readiness } from './shared/readiness.ts';
+import { healthRoutes } from './modules/health/health.routes.ts';
 
 interface AppOptions {
-  logger?: boolean;
+  logger?: FastifyServerOptions['logger'];
   /** Injected so tests can fix the current time. */
   clock?: Clock;
+  /** What is running and where. Defaults to a local development build. */
+  info?: BuildInfo;
+  /** Shared with the shutdown logic, which turns it off. */
+  readiness?: Readiness;
 }
 
-export async function buildApp({ logger = true, clock = systemClock }: AppOptions = {}) {
+export async function buildApp({
+  logger = true,
+  clock = systemClock,
+  info = buildInfo(parseEnv({})),
+  readiness = createReadiness(),
+}: AppOptions = {}) {
   const app = Fastify({ logger });
 
   app.setValidatorCompiler(validatorCompiler);
@@ -41,6 +53,7 @@ export async function buildApp({ logger = true, clock = systemClock }: AppOption
   });
   await app.register(swaggerUi, { routePrefix: '/docs' });
 
+  await app.register(healthRoutes, { info, readiness });
   await app.register(zonesRoutes);
   await app.register(quotesRoutes, { clock });
 
