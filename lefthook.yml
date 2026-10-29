@@ -8,3 +8,8 @@ pre-commit:
     - name: format
       run: pnpm exec prettier --write --ignore-unknown {staged_files}
       stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: check
+      run: pnpm check
