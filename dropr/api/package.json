@@ -6,7 +6,7 @@
     "dev": "node --watch src/server.ts",
     "start": "node src/server.ts",
     "typecheck": "tsc",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "contract": "node scripts/export-openapi.ts && redocly bundle contract/openapi.yaml --remove-unused-components -o contract/openapi.yaml && redocly lint contract/openapi.yaml",
     "docs": "redocly build-docs contract/openapi.yaml -o dist/api-docs.html",
     "check": "pnpm typecheck && pnpm test && pnpm contract && git diff --exit-code -- contract/"
@@ -14,6 +14,7 @@
   "devDependencies": {
     "@redocly/cli": "^2.71.2",
     "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^5.0.5",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5",
     "yaml": "^2.9.1"

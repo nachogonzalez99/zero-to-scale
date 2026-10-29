@@ -1,7 +1,8 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
-import { Problem } from '../../shared/problem.ts';
-import { zones } from './zones.data.ts';
-import { Zone, ZoneIdParams, ZoneList } from './zones.schemas.ts';
+import { DomainError } from '../../shared/errors.ts';
+import { commonErrorResponses, jsonResponse, problemResponse } from '../../shared/responses.ts';
+import { ZONES, findZoneById } from './zones.ts';
+import { ZoneIdParamsSchema, ZoneListSchema, ZoneSchema } from './zones.schemas.ts';
 
 export const zonesRoutes: FastifyPluginCallbackZod = (app, _opts, done) => {
   app.get(
@@ -11,10 +12,13 @@ export const zonesRoutes: FastifyPluginCallbackZod = (app, _opts, done) => {
         operationId: 'listZones',
         summary: 'List coverage zones',
         tags: ['zones'],
-        response: { 200: ZoneList, 401: Problem },
+        response: {
+          200: jsonResponse('All coverage zones.', ZoneListSchema),
+          ...commonErrorResponses,
+        },
       },
     },
-    () => ({ items: zones }),
+    () => ({ items: [...ZONES] }),
   );
 
   app.get(
@@ -24,20 +28,19 @@ export const zonesRoutes: FastifyPluginCallbackZod = (app, _opts, done) => {
         operationId: 'getZone',
         summary: 'Get a coverage zone',
         tags: ['zones'],
-        params: ZoneIdParams,
-        response: { 200: Zone, 401: Problem, 404: Problem },
+        params: ZoneIdParamsSchema,
+        response: {
+          200: jsonResponse('The zone.', ZoneSchema),
+          400: problemResponse('The zone id is malformed.'),
+          404: problemResponse('The zone does not exist.'),
+          ...commonErrorResponses,
+        },
       },
     },
-    (req, reply) => {
-      const zone = zones.find((z) => z.id === req.params.zoneId);
+    (req) => {
+      const zone = findZoneById(req.params.zoneId);
       if (!zone) {
-        reply.code(404);
-        return {
-          type: 'about:blank',
-          title: 'Zone not found',
-          status: 404,
-          code: 'ZONE_NOT_FOUND',
-        };
+        throw new DomainError('ZONE_NOT_FOUND', `Zone '${req.params.zoneId}' does not exist.`);
       }
       return zone;
     },

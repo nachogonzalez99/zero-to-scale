@@ -1,26 +1,24 @@
 import { z } from 'zod';
+import { CoordinatesSchema } from '../../shared/geo.ts';
 
-const Coordinates = z
-  .object({
-    lat: z.number().min(-90).max(90),
-    lng: z.number().min(-180).max(180),
-  })
-  .meta({ id: 'Coordinates' });
+const cents = () => z.number().int().min(0);
 
-export const Zone = z
+export const ZoneSchema = z
   .object({
     id: z.string(),
     name: z.string(),
-    center: Coordinates,
+    center: CoordinatesSchema,
     radiusMeters: z.number().int().min(1),
-    baseFeeCents: z.number().int().min(0),
+    timeZone: z.string().describe('IANA time zone used for peak hours.'),
+    baseFeeCents: cents(),
+    perKmCents: cents(),
+    peakSurchargeCents: cents(),
+    freeDeliveryFromCents: cents().describe('Orders of at least this amount get free delivery.'),
   })
   .meta({ id: 'Zone' });
 
-export const ZoneList = z.object({ items: z.array(Zone) }).meta({ id: 'ZoneList' });
+export const ZoneListSchema = z.object({ items: z.array(ZoneSchema) }).meta({ id: 'ZoneList' });
 
-export const ZoneIdParams = z.object({
+export const ZoneIdParamsSchema = z.object({
   zoneId: z.string().regex(/^[a-z0-9-]{1,32}$/),
 });
-
-export type Zone = z.infer<typeof Zone>;

@@ -1,6 +1,6 @@
 # 0004. Contract-first API design
 
-- **Status:** Accepted
+- **Status:** Superseded by 0005
 - **Date:** 2026-10-28
 
 ## Context
