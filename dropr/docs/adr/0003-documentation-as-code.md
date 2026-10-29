@@ -1,4 +1,4 @@
-# 0005. Documentation as code
+# 0003. Documentation as code
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
