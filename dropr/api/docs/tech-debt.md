@@ -1,2 +1,0 @@
-- **What:** The type generator relies on TypeScript's classic compiler API, which TypeScript 7 does not expose. It runs in isolation through `pnpm dlx` with TypeScript 5.9.3; the project uses TypeScript 7. A pnpm override was tried and does not work, because TypeScript is a peer dependency of the generator.
-- **Risk:** The generator's versions live in the `generate` script, not in the lockfile, so they are not updated or audited with the rest of the dependencies.
