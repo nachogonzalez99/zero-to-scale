@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "scripts", "test/zones.test.ts"]
+  "include": ["src", "scripts", "test", "vitest.config.ts"]
 }
