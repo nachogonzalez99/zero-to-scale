@@ -1,0 +1,29 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+env:
+  LEFTHOOK: 0
+
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/setup@v3
+        with:
+          node-version-file: .nvmrc
+          require-lockfile: true
+          cache: true
+
+      - run: echo "$PR_TITLE" | pnpm exec commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
