@@ -16,13 +16,16 @@
   },
   "scripts": {
     "format": "oxlint --fix && prettier --write .",
-    "lint": "oxlint && prettier --check .",
+    "lint": "oxlint && prettier --check . && secretlint \"**/*\" && knip",
     "check": "pnpm lint && pnpm -r check"
   },
   "devDependencies": {
+    "@secretlint/secretlint-rule-preset-recommend": "^13.1.0",
+    "knip": "^6.43.0",
     "lefthook": "^2.2.2",
     "oxlint": "^1.90.0",
     "oxlint-tsgolint": "^7.0.2005",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "secretlint": "^13.1.0"
   }
 }

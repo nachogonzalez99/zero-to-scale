@@ -1,6 +1,8 @@
 pre-commit:
   piped: true
   jobs:
+    - name: secrets
+      run: pnpm exec secretlint {staged_files}
     - name: lint
       glob: '*.{ts,js}'
       run: pnpm exec oxlint --fix {staged_files}
