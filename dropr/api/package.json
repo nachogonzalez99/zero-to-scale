@@ -1,0 +1,46 @@
+{
+  "name": "@dropr/api",
+  "private": true,
+  "type": "module",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.10.0",
+      "onFail": "error"
+    }
+  },
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "test": "vitest run",
+    "lint": "tsc && oxlint --type-aware src scripts test && prettier --check \"{src,scripts,test}/**/*.ts\"",
+    "format": "oxlint --type-aware --fix src scripts test && prettier --write \"{src,scripts,test}/**/*.ts\"",
+    "contract": "node scripts/export-openapi.ts && redocly bundle contract/openapi.yaml --remove-unused-components -o contract/openapi.yaml && redocly lint contract/openapi.yaml",
+    "docs": "redocly build-docs contract/openapi.yaml -o dist/api-docs.html",
+    "check": "pnpm lint && pnpm test && pnpm contract && git diff --exit-code -- contract/",
+    "prepare": "cd ../.. && husky dropr/api/.husky"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.71.2",
+    "@types/node": "^26.6.5",
+    "husky": "^9.1.7",
+    "oxlint": "^1.90.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.9.2",
+    "@fastify/swagger-ui": "^6.1.2",
+    "fastify": "^5.12.7",
+    "fastify-type-provider-zod": "^7.0.0",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,8 @@
+extends:
+  - recommended
+
+rules:
+  # Deployment targets are environment configuration, not part of the contract.
+  no-empty-servers: off
+  # Internal proprietary API: no SPDX identifier or public license URL applies.
+  info-license-strict: off
