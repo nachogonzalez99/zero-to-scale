@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": { "typeAware": true },
   "plugins": ["typescript", "unicorn", "oxc", "import", "node", "vitest"],
   "categories": {
     "correctness": "error",
@@ -31,11 +32,11 @@
   },
   "overrides": [
     {
-      "files": ["src/shared/config.ts"],
+      "files": ["dropr/api/src/shared/config.ts"],
       "rules": { "node/no-process-env": "off" }
     },
     {
-      "files": ["test/**"],
+      "files": ["dropr/api/test/**"],
       "rules": {
         "typescript/no-non-null-assertion": "off",
         "typescript/no-unsafe-assignment": "off",

@@ -1,0 +1,10 @@
+pre-commit:
+  piped: true
+  jobs:
+    - name: lint
+      glob: '*.{ts,js}'
+      run: pnpm exec oxlint --fix {staged_files}
+      stage_fixed: true
+    - name: format
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
