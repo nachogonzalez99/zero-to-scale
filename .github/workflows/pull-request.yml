@@ -16,9 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/setup@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e
         with:
           node-version-file: .nvmrc
           require-lockfile: true
@@ -35,8 +34,7 @@ jobs:
     env:
       CONTRACT: dropr/api/contract/openapi.yaml
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Get the contract from the base branch
         id: base
         run: |

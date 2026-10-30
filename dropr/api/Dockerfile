@@ -24,8 +24,12 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app ./
 
-# Least privilege: if the app is compromised, the attacker is not root
-USER node
+# npm ships with the base image, but nothing runs it here: fewer packages, fewer vulnerabilities
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# Least privilege: if the app is compromised, the attacker is not root.
+# Numeric (the image's `node` user) so platforms can verify it is not root.
+USER 1000:1000
 EXPOSE 3000
 
 # Last: COMMIT changes on every build and would invalidate every layer below it
@@ -33,9 +37,6 @@ ARG VERSION=0.0.0-dev
 ARG COMMIT=unknown
 ENV APP_VERSION=$VERSION \
     APP_COMMIT=$COMMIT
-LABEL org.opencontainers.image.version=$VERSION \
-      org.opencontainers.image.revision=$COMMIT \
-      org.opencontainers.image.source=https://github.com/<tu-usuario>/zero-to-scale
 
 # Exec form: node is PID 1 and receives signals directly
 CMD ["node", "src/server.ts"]
