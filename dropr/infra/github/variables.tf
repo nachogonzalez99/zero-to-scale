@@ -18,3 +18,22 @@ variable "repository_visibility" {
     error_message = "repository_visibility must be public or private."
   }
 }
+
+variable "northflank_project_id" {
+  description = "Northflank project that hosts every environment."
+  type        = string
+}
+
+variable "northflank_registry_credentials_id" {
+  description = "Northflank registry credentials to pull private images. Empty if the image is public."
+  type        = string
+  default     = ""
+}
+
+variable "staging" {
+  description = "Where staging lives: its public URL and its Northflank service."
+  type = object({
+    url                   = string
+    northflank_service_id = string
+  })
+}

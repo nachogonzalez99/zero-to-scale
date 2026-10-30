@@ -1,0 +1,97 @@
+name: Deploy
+
+# Deploys an image that CI already built and published. Never builds.
+# Called by CI after every merge (staging), and run by hand to roll back or redeploy.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Where to deploy
+        type: string
+        required: true
+      image:
+        description: Image tag, e.g. sha-1a2b3c4
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to deploy
+        type: environment
+        required: true
+      image:
+        description: Image tag, e.g. sha-1a2b3c4
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Secrets and variables come from this GitHub Environment, and the deployment is recorded there
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.APP_URL }}
+    # One deployment per environment at a time. Never cancel one halfway: queue instead.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Deploy
+        env:
+          NORTHFLANK_API_TOKEN: ${{ secrets.NORTHFLANK_API_TOKEN }}
+          PROJECT_ID: ${{ vars.NORTHFLANK_PROJECT_ID }}
+          SERVICE_ID: ${{ vars.NORTHFLANK_SERVICE_ID }}
+          CREDENTIALS_ID: ${{ vars.NORTHFLANK_REGISTRY_CREDENTIALS_ID }}
+          IMAGE_TAG: ${{ inputs.image }}
+        run: |
+          # Registries require lowercase names
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dropr-api:${IMAGE_TAG}"
+          body=$(jq --null-input --arg image "$image" --arg credentials "$CREDENTIALS_ID" '{
+            deployment: {
+              instances: 1,
+              external: ({ imagePath: $image } + (if $credentials == "" then {} else { credentials: $credentials } end))
+            }
+          }')
+          curl --silent --show-error --fail-with-body --request PATCH \
+            --header "Authorization: Bearer $NORTHFLANK_API_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$body" \
+            "https://api.northflank.com/v1/projects/$PROJECT_ID/services/deployment/$SERVICE_ID"
+          echo "Deployed \`$image\` to ${{ inputs.environment }}" >> "$GITHUB_STEP_SUMMARY"
+
+      # The environment, not the artifact: is this environment serving this version?
+      - name: Smoke test
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          IMAGE_TAG: ${{ inputs.image }}
+        run: |
+          commit="${IMAGE_TAG#sha-}"
+
+          # Wait until the new version is ready: the rollout takes a while
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail "$APP_URL/health/ready" > ready.json \
+              && jq --exit-status --arg commit "$commit" '.commit | startswith($commit)' ready.json > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "::error::$APP_URL is not serving $IMAGE_TAG after 5 minutes"
+              cat ready.json 2> /dev/null || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # The right configuration reached it
+          jq --exit-status --arg environment "$ENVIRONMENT" '.environment == $environment' ready.json
+
+          # A real request works end to end
+          curl --silent --fail "$APP_URL/v1/quotes" \
+            --header 'content-type: application/json' \
+            --data '{"pickup":{"lat":40.4169,"lng":-3.7035},"dropoff":{"lat":40.4153,"lng":-3.6845},"orderAmountCents":1500}' \
+            | jq --exit-status '.currency == "EUR" and .totalCents >= 0'

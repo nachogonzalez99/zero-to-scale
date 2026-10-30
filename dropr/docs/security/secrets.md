@@ -16,6 +16,8 @@ Ask: **does a person need to read it?**
 
 Runtime secrets flow one way: GitHub Environment → deploy job → hosting platform → environment variable of the API.
 
+The exception: a secret the platform itself uses, not our app or our CI, is stored directly in that platform. Example: the token the hosting platform uses to pull our image.
+
 ## Rules
 
 - Prefer no secret: ephemeral credentials (`GITHUB_TOKEN`, OIDC) over stored tokens.
@@ -30,18 +32,21 @@ Runtime secrets flow one way: GitHub Environment → deploy job → hosting plat
 ## Rotating a machine secret
 
 1. Create the new token in the issuing service.
-2. Replace the value in the GitHub Environment.
+2. Replace the value where it lives (GitHub Environment, or the platform for platform secrets).
 3. Redeploy the environment.
 4. Revoke the old token.
 5. Update the expiry in the inventory.
 
 ## Inventory
 
-| Secret              | Purpose                               | Lives in                     | Used by          | Owner | Expiry  |
-| ------------------- | ------------------------------------- | ---------------------------- | ---------------- | ----- | ------- |
-| `GITHUB_TOKEN`      | CI: read code, publish images to GHCR | Created by GitHub per run    | CI               | —     | Per run |
-| Push token          | Push code from the CTO's laptop       | Bitwarden (CTO, personal)    | CTO              | CTO   | 90 days |
-| OpenTofu token      | Apply `dropr/infra/github`            | Bitwarden (CTO, personal)    | CTO              | CTO   | 90 days |
-| Break-glass account | Owner of every service                | Bitwarden organization vault | Emergencies only | CTO   | —       |
+| Secret              | Purpose                                                                | Lives in                        | Used by          | Owner | Expiry  |
+| ------------------- | ---------------------------------------------------------------------- | ------------------------------- | ---------------- | ----- | ------- |
+| `GITHUB_TOKEN`      | CI: read code, publish images to GHCR                                  | Created by GitHub per run       | CI               | —     | Per run |
+| Push token          | Push code from the CTO's laptop                                        | Bitwarden (CTO, personal)       | CTO              | CTO   | 90 days |
+| OpenTofu token      | Apply `dropr/infra/github`                                             | Bitwarden (CTO, personal)       | CTO              | CTO   | 90 days |
+| GHCR pull token     | Northflank pulls `dropr-api` images. Classic PAT, `read:packages` only | Northflank registry credentials | Northflank       | CTO   | 90 days |
+| Break-glass account | Owner of every service                                                 | Bitwarden organization vault    | Emergencies only | CTO   | —       |
 
 Planned: hosting deploy tokens (one per environment, GitHub Environment secrets) and the telemetry key (GitHub Environment, copied to hosting at deploy).
+
+Known gap: the GHCR pull token belongs to the CTO's personal GitHub account. If that account loses access, deployments stop pulling images. Move it to the company account when the repository moves to the organization.
