@@ -24,8 +24,9 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app ./
 
-# Least privilege: if the app is compromised, the attacker is not root
-USER node
+# Least privilege: if the app is compromised, the attacker is not root.
+# Numeric (the image's `node` user) so platforms can verify it is not root.
+USER 1000:1000
 EXPOSE 3000
 
 # Last: COMMIT changes on every build and would invalidate every layer below it
