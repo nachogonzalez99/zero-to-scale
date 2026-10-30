@@ -147,3 +147,5 @@ jobs:
     with:
       environment: staging
       image: ${{ needs.image.outputs.tag }}
+    # Reusable workflows only receive the secrets the caller passes
+    secrets: inherit
