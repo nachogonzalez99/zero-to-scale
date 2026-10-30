@@ -24,6 +24,9 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app ./
 
+# npm ships with the base image, but nothing runs it here: fewer packages, fewer vulnerabilities
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Least privilege: if the app is compromised, the attacker is not root.
 # Numeric (the image's `node` user) so platforms can verify it is not root.
 USER 1000:1000
