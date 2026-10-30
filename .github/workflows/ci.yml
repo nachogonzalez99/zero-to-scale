@@ -13,7 +13,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel outdated runs on pull requests only: a run on main may be deploying
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   LEFTHOOK: 0
@@ -51,6 +52,8 @@ jobs:
     name: Image
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      tag: ${{ steps.meta.outputs.version }}
     permissions:
       contents: read
       packages: write # publish to GHCR, only on pushes to main
@@ -134,3 +137,13 @@ jobs:
           docker tag dropr-api:ci "$TAG"
           docker push "$TAG"
           echo "Published \`$TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+    # Continuous delivery: every merge to main reaches staging, once every check has passed
+  deploy-staging:
+    name: Staging
+    if: github.event_name == 'push'
+    needs: [check, audit, image]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      image: ${{ needs.image.outputs.tag }}
