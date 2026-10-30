@@ -1,5 +1,6 @@
 # Pinned by digest: same base on every build. Dependabot proposes updates.
-FROM node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39 AS base
+# Pin it with: docker buildx imagetools inspect node:26-slim  →  node:26-slim@sha256:<index digest>
+FROM node:26-slim AS base
 
 # ---- Build: prepares the app with production dependencies only ----
 FROM base AS build

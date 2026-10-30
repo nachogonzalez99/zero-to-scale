@@ -2,17 +2,22 @@
 
 Company-wide documentation. Service-specific docs live in each service's `docs/` folder.
 
-| Doc                              | What it covers                           |
-| -------------------------------- | ---------------------------------------- |
-| [conventions.md](conventions.md) | The rules everyone follows               |
-| [tech-debt.md](tech-debt.md)     | Known shortcuts and when to revisit them |
-| [adr/](adr/)                     | Architecture decisions                   |
+| Doc                                        | What it covers                              |
+| ------------------------------------------ | ------------------------------------------- |
+| [conventions.md](conventions.md)           | The rules everyone follows                  |
+| [environments.md](environments.md)         | Environments and how a change reaches them  |
+| [ci-cd.md](ci-cd.md)                       | What runs in CI, when, and what it protects |
+| [security/secrets.md](security/secrets.md) | Where secrets live, and their inventory     |
+| [security/access.md](security/access.md)   | Accounts, owners, joiners and leavers       |
+| [tech-debt.md](tech-debt.md)               | Known shortcuts and when to revisit them    |
+| [adr/](adr/)                               | Architecture decisions                      |
 
-## Services
+## Services and infrastructure
 
-| Service                 | Docs                                                                                            |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| [api](../api/README.md) | [Delivery quotes specification](../api/docs/spec.md) · [Contract](../api/contract/openapi.yaml) |
+| What                        | Docs                                                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| [api](../api/README.md)     | [Delivery quotes specification](../api/docs/spec.md) · [Contract](../api/contract/openapi.yaml) |
+| [infra](../infra/README.md) | [GitHub as code](../infra/github/README.md)                                                     |
 
 ## Architecture decisions
 
@@ -31,3 +36,11 @@ Company-wide documentation. Service-specific docs live in each service's `docs/`
 | 0011 | [Dependency health in CI](adr/0011-dependency-health-in-ci.md)                                                    | Accepted           |
 | 0012 | [Testing strategy](adr/0012-testing-strategy.md)                                                                  | Accepted           |
 | 0013 | [Error responses as Problem Details](adr/0013-error-responses-as-problem-details.md)                              | Accepted           |
+| 0014 | [Container image](adr/0014-container-image.md)                                                                    | Accepted           |
+| 0015 | [Health probes and graceful shutdown](adr/0015-health-probes-and-graceful-shutdown.md)                            | Accepted           |
+| 0016 | [Environments and delivery flow](adr/0016-environments-and-delivery-flow.md)                                      | Accepted           |
+| 0017 | [Image publishing](adr/0017-image-publishing.md)                                                                  | Accepted           |
+| 0018 | [GitHub settings as code](adr/0018-github-settings-as-code.md)                                                    | Accepted           |
+| 0019 | [Secrets management](adr/0019-secrets-management.md)                                                              | Accepted           |
+| 0020 | [Identity and access](adr/0020-identity-and-access.md)                                                            | Accepted           |
+| 0021 | [Hosting](adr/0021-hosting.md)                                                                                    | Proposed           |

@@ -8,6 +8,10 @@
 .github
 .vscode
 lab
+course
+dropr/infra
+**/.terraform
 
 # Never inside an image
 **/.env*
+**/*.tfstate*

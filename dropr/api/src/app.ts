@@ -7,13 +7,13 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
+import { healthRoutes } from './modules/health/health.routes.ts';
 import { quotesRoutes } from './modules/quotes/quotes.routes.ts';
 import { zonesRoutes } from './modules/zones/zones.routes.ts';
 import { type Clock, systemClock } from './shared/clock.ts';
+import { type BuildInfo, buildInfo, parseEnv } from './shared/config.ts';
 import { registerErrorHandling } from './shared/error-handler.ts';
-import { buildInfo, parseEnv, type BuildInfo } from './shared/config.ts';
-import { createReadiness, type Readiness } from './shared/readiness.ts';
-import { healthRoutes } from './modules/health/health.routes.ts';
+import { type Readiness, createReadiness } from './shared/readiness.ts';
 
 interface AppOptions {
   logger?: FastifyServerOptions['logger'];

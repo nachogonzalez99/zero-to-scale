@@ -4,7 +4,7 @@ The rules everyone follows. Each one links to the decision behind it.
 
 ## Language
 
-- Everything in the repository is written in English: code, comments, docs, commits.
+- Everything in the repository is written in English: code, comments, docs, commits. The only exception is `course/`, the course material, written in Spanish and not part of Dropr.
 
 ## Repository and tooling
 
@@ -21,7 +21,7 @@ The rules everyone follows. Each one links to the decision behind it.
 
 - Prettier formats and oxlint (type-aware) lints. Both run on save, on commit and in CI ([ADR-0007](adr/0007-oxlint-and-prettier.md), [ADR-0008](adr/0008-git-hooks-with-lefthook.md)).
 - `pnpm check` from the root must pass before pushing. Daily commands: `pnpm format` and `pnpm check` from the root; `pnpm dev` from the package.
-- Environment variables are read only in `src/shared/config.ts` and validated at startup.
+- Configuration comes only from environment variables, read in `src/shared/config.ts` and validated at startup. `APP_ENV` says where the app runs; `NODE_ENV` only says how libraries behave ([ADR-0015](adr/0015-health-probes-and-graceful-shutdown.md)).
 - Functions are `async` only when they `await`.
 
 ## Git
@@ -41,6 +41,7 @@ The rules everyone follows. Each one links to the decision behind it.
 - Errors are RFC 9457 problems (`application/problem+json`) with a stable `code` in `SCREAMING_SNAKE_CASE` ([ADR-0013](adr/0013-error-responses-as-problem-details.md)).
 - A change that breaks the contract must be declared with `!` in the PR title.
 - Amounts are integer cents; distances are integer meters; times leave the API in UTC.
+- Health probes (`/health/live`, `/health/ready`) are the exception: unversioned, out of the contract, no API key, not logged per request, and a not-ready `503` is a status, not a Problem. Liveness never checks dependencies.
 
 ## Code organization
 
@@ -49,6 +50,28 @@ The rules everyone follows. Each one links to the decision behind it.
 - Cross-cutting code lives in `src/shared/`.
 - Domain code is pure: it receives the time and other non-deterministic inputs as parameters, and throws `DomainError` with a code. Only routes read the clock or generate ids.
 - Zod schemas are named `<Name>Schema`; their `.meta({ id })` is `<Name>`, the name in the contract.
+
+## Containers and delivery
+
+- One image per service, built from the repository root. What ships is the package's `files` allowlist ([ADR-0014](adr/0014-container-image.md)).
+- Base images pinned by digest; the runtime runs as a numeric non-root user.
+- Images are tagged `sha-<commit>` and never `latest`. The tested image is the published one ([ADR-0017](adr/0017-image-publishing.md)).
+- Production dependencies go in `dependencies`, everything else in `devDependencies`: the image installs only the first.
+- Every GitHub Action is pinned to a full commit SHA with its version in a comment.
+- The same image goes to every environment; only configuration changes ([ADR-0016](adr/0016-environments-and-delivery-flow.md)).
+
+## Infrastructure
+
+- Infrastructure is code, with OpenTofu, in `dropr/infra/<system>/` ([ADR-0018](adr/0018-github-settings-as-code.md)).
+- Changes go through a pull request; `tofu apply` runs after merging. Never change by hand what is managed in code.
+- State is never committed. `.terraform.lock.hcl` always is.
+- Resources that hold data or history (the repository, databases) carry `prevent_destroy`.
+
+## Security
+
+- Machine secrets live in GitHub Environments; secrets people need to read live in Bitwarden; values never appear in the repo ([ADR-0019](adr/0019-secrets-management.md)).
+- Every secret and every account is listed in [security/](security/), without values.
+- The company account owns every service; people use their own accounts ([ADR-0020](adr/0020-identity-and-access.md)).
 
 ## Testing
 

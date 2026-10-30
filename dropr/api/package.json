@@ -2,6 +2,9 @@
   "name": "@dropr/api",
   "private": true,
   "type": "module",
+  "files": [
+    "src"
+  ],
   "scripts": {
     "dev": "node --watch src/server.ts",
     "start": "node src/server.ts",
@@ -25,8 +28,5 @@
     "fastify": "^5.12.7",
     "fastify-type-provider-zod": "^7.0.0",
     "zod": "^4.6.7"
-  },
-  "files": [
-    "src"
-  ]
+  }
 }

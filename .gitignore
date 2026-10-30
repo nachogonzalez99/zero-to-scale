@@ -1,3 +1,9 @@
 node_modules/
 dist/
 coverage/
+
+# OpenTofu: providers are downloaded, state stays local (it can hold secrets)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan

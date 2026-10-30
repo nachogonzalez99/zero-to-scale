@@ -1,11 +1,13 @@
 # Zero to Scale
 
-Dropr, a delivery startup, built from a one-person company upwards. This repo holds the company's code and documentation (`dropr/`) and the course tooling (`lab/`).
+Dropr, a delivery startup, built from a one-person company upwards. This repo holds the company's code and documentation (`dropr/`), the course material (`course/`, in Spanish) and the course tooling (`lab/`).
 
 ## Requirements
 
 - Node.js 26 (`nvm use` reads `.nvmrc`)
 - pnpm: any recent version. It switches to the version pinned in `package.json` by itself.
+- Docker: only to build and run the container image. Day-to-day work uses `pnpm dev`.
+- OpenTofu 1.13+: only to change infrastructure in `dropr/infra/`.
 
 ## Setup
 
@@ -40,7 +42,9 @@ Details in [dropr/docs/conventions.md](dropr/docs/conventions.md).
 ```
 zero-to-scale/
 ├─ dropr/
-│  ├─ docs/   company-wide documentation: conventions, ADRs, tech debt
-│  └─ api/    the API service
+│  ├─ docs/   company-wide documentation: conventions, ADRs, security, tech debt
+│  ├─ api/    the API service
+│  └─ infra/  infrastructure as code (OpenTofu)
+├─ course/    the course, era by era (Spanish; not part of Dropr)
 └─ lab/       course tooling (not part of Dropr)
 ```

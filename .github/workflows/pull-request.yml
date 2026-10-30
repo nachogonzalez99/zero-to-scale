@@ -16,8 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3
         with:
           node-version-file: .nvmrc
           require-lockfile: true
@@ -34,7 +35,8 @@ jobs:
     env:
       CONTRACT: dropr/api/contract/openapi.yaml
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
       - name: Get the contract from the base branch
         id: base
         run: |
@@ -49,7 +51,7 @@ jobs:
 
       - name: Compare contracts
         if: steps.base.outputs.exists == 'true'
-        uses: oasdiff/oasdiff-action/breaking@v0.1.21
+        uses: oasdiff/oasdiff-action/breaking@9e56cf8b3aff7edb326d5767d3d23f96127e20c3 # v0.1.21
         with:
           base: base-openapi.yaml
           revision: ${{ env.CONTRACT }}

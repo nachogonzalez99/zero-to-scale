@@ -13,9 +13,33 @@ pnpm dev     # reload on save
 pnpm start   # plain start
 ```
 
-| Variable | Default | Meaning   |
-| -------- | ------- | --------- |
-| `PORT`   | `3000`  | HTTP port |
+| Variable              | Default     | Meaning                                                                  |
+| --------------------- | ----------- | ------------------------------------------------------------------------ |
+| `PORT`                | `3000`      | HTTP port                                                                |
+| `APP_ENV`             | `local`     | Where it runs: `local`, `staging` or `production`                        |
+| `LOG_LEVEL`           | `info`      | `fatal`, `error`, `warn`, `info`, `debug` or `trace`                     |
+| `APP_VERSION`         | `0.0.0-dev` | Set by the image build                                                   |
+| `APP_COMMIT`          | `unknown`   | Set by the image build                                                   |
+| `SHUTDOWN_DRAIN_MS`   | `0`         | Keeps serving after readiness turns off, before closing                  |
+| `SHUTDOWN_TIMEOUT_MS` | `8000`      | Max wait for in-flight requests. Drain + timeout < platform grace period |
+
+Invalid values stop the API at startup.
+
+## Run with Docker
+
+From the repository root:
+
+```bash
+docker build -f dropr/api/Dockerfile -t dropr-api:local --build-arg COMMIT=$(git rev-parse HEAD) .
+docker run --rm -p 3000:3000 dropr-api:local
+```
+
+| Build argument | Default     | Meaning                    |
+| -------------- | ----------- | -------------------------- |
+| `VERSION`      | `0.0.0-dev` | Release version, set by CI |
+| `COMMIT`       | `unknown`   | Git commit, set by CI      |
+
+The image runs as UID 1000, has no npm or pnpm, and stops cleanly on SIGTERM. CI builds, tests, scans and publishes it as `ghcr.io/<owner>/dropr-api:sha-<commit>`.
 
 ## Endpoints
 
@@ -24,6 +48,15 @@ pnpm start   # plain start
 | `POST` | `/v1/quotes`         | Calculates a delivery quote     |
 | `GET`  | `/v1/zones`          | Lists coverage zones            |
 | `GET`  | `/v1/zones/{zoneId}` | Returns one zone and its prices |
+
+Health probes, for the platform and not part of the contract:
+
+| Path            | Answers                                             |
+| --------------- | --------------------------------------------------- |
+| `/health/live`  | Is the process alive? Always `200` while it answers |
+| `/health/ready` | Can it take traffic? `503` once shutdown starts     |
+
+Both return `status`, `version`, `commit` and `environment`.
 
 ```bash
 curl -s localhost:3000/v1/quotes \
@@ -62,12 +95,14 @@ Every error is an RFC 9457 problem (`application/problem+json`) with a stable `c
 ```
 src/
 ├─ app.ts                  builds the Fastify app (used by tests and server)
-├─ server.ts               starts listening
+├─ server.ts               starts listening, handles SIGTERM and SIGINT
 ├─ modules/
+│  ├─ health/              health.schemas.ts · health.routes.ts
 │  ├─ quotes/              quotes.domain.ts · quotes.schemas.ts · quotes.routes.ts
 │  └─ zones/               zones.ts · zones.schemas.ts · zones.routes.ts
-└─ shared/                 config, clock, errors, error handler, geo, responses
+└─ shared/                 config, clock, errors, error handler, geo, readiness, responses, shutdown
 test/                      <module>.domain.test.ts · <module>.http.test.ts
+Dockerfile                 the image, built from the repository root
 ```
 
 Domain files are pure: no HTTP, no clock, no randomness. Routes validate, call the domain and shape the response.
