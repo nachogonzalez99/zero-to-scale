@@ -2,7 +2,13 @@
 
 | Owner | Status | Last reviewed |
 | ----- | ------ | ------------- |
-| CTO   | Active | 2026-10-30    |
+
+<<<<<<< HEAD
+| CTO | Active | 2026-10-30 |
+=======
+| CTO | Active | 2026-10-29 |
+
+> > > > > > > origin/main
 
 Conscious shortcuts. Each entry says why it was accepted and when to revisit it. Remove an entry in the same pull request that resolves it.
 
@@ -10,8 +16,12 @@ Conscious shortcuts. Each entry says why it was accepted and when to revisit it.
 
 - **What:** The contract declares an `X-Api-Key` header and `401` responses, but no route checks it.
 - **Why accepted:** The contract states the intended promise; enforcement belongs to the security work.
+  <<<<<<< HEAD
 - **Risk:** Anyone can call the API, including the deployed environments.
-- **Review when:** Before the first real client.
+- # **Review when:** Before the first real client.
+- **Risk:** Anyone can call the API. Must be fixed before any public deployment.
+- **Review when:** Before the first deployment.
+  > > > > > > > origin/main
 
 ## Straight-line distance
 
