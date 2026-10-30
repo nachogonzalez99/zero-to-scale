@@ -1,0 +1,60 @@
+name: Pull request
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+env:
+  LEFTHOOK: 0
+
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3
+        with:
+          node-version-file: .nvmrc
+          require-lockfile: true
+          cache: true
+
+      - run: echo "$PR_TITLE" | pnpm exec commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+
+  breaking-changes:
+    name: API breaking changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CONTRACT: dropr/api/contract/openapi.yaml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Get the contract from the base branch
+        id: base
+        run: |
+          git fetch --depth=1 origin "$BASE_REF"
+          if git show "FETCH_HEAD:$CONTRACT" > base-openapi.yaml 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No contract on $BASE_REF yet: nothing to compare."
+          fi
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      - name: Compare contracts
+        if: steps.base.outputs.exists == 'true'
+        uses: oasdiff/oasdiff-action/breaking@9e56cf8b3aff7edb326d5767d3d23f96127e20c3 # v0.1.21
+        with:
+          base: base-openapi.yaml
+          revision: ${{ env.CONTRACT }}
+          fail-on: ${{ !contains(github.event.pull_request.title, '!:') && 'ERR' || '' }}
+          review: false
+          github-token: ''

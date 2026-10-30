@@ -1,0 +1,4 @@
+packages:
+  - dropr/*
+allowBuilds:
+  lefthook: true

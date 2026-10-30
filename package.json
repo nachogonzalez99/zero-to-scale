@@ -1,0 +1,33 @@
+{
+  "name": "zero-to-scale",
+  "private": true,
+  "type": "module",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.28.8",
+      "onFail": "error"
+    }
+  },
+  "scripts": {
+    "format": "oxlint --fix && prettier --write .",
+    "lint": "oxlint && prettier --check . && secretlint \"**/*\" && knip",
+    "check": "pnpm lint && pnpm -r check"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.1.0",
+    "knip": "^6.43.0",
+    "lefthook": "^2.2.2",
+    "oxlint": "^1.90.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "prettier": "^3.9.10",
+    "secretlint": "^13.1.0"
+  }
+}

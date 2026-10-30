@@ -1,0 +1,29 @@
+pre-commit:
+  piped: true
+  jobs:
+    - name: secrets
+      run: pnpm exec secretlint {staged_files}
+    - name: lint
+      glob: '*.{ts,js}'
+      run: pnpm exec oxlint --fix {staged_files}
+      stage_fixed: true
+    - name: format
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+pre-push:
+  piped: true
+  jobs:
+    - name: no-push-to-main
+      run: |
+        if [ "$(git branch --show-current)" = "main" ]; then
+          echo "Direct pushes to main are not allowed. Create a branch and open a pull request."
+          exit 1
+        fi
+    - name: check
+      run: pnpm check
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}

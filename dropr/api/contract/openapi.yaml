@@ -1,0 +1,346 @@
+openapi: 3.1.0
+info:
+  title: Dropr API
+  version: 0.2.0
+  license:
+    name: Proprietary
+security:
+  - ApiKey: []
+paths:
+  /v1/zones:
+    get:
+      operationId: listZones
+      summary: List coverage zones
+      tags:
+        - zones
+      responses:
+        '200':
+          description: All coverage zones.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneList'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /v1/zones/{zoneId}:
+    get:
+      operationId: getZone
+      summary: Get a coverage zone
+      tags:
+        - zones
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[a-z0-9-]{1,32}$
+          in: path
+          name: zoneId
+          required: true
+      responses:
+        '200':
+          description: The zone.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+        '400':
+          description: The zone id is malformed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: The zone does not exist.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /v1/quotes:
+    post:
+      operationId: createQuote
+      summary: Calculate a delivery quote
+      tags:
+        - quotes
+      description: 'Calculates the price of a delivery. Nothing is stored: the same request at the same time returns the same price.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequestInput'
+      responses:
+        '200':
+          description: The calculated quote.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '400':
+          description: The request is invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: 'The delivery cannot be quoted: `ZONE_NOT_COVERED`, `DISTANCE_EXCEEDED` or `INVALID_DELIVERY_TIME`.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  schemas:
+    CoordinatesInput:
+      type: object
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
+      required:
+        - lat
+        - lng
+      additionalProperties: false
+    QuoteRequestInput:
+      type: object
+      properties:
+        pickup:
+          description: Where the order is collected.
+          $ref: '#/components/schemas/CoordinatesInput'
+        dropoff:
+          description: Where the order is delivered.
+          $ref: '#/components/schemas/CoordinatesInput'
+        orderAmountCents:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+        deliveryAt:
+          description: Requested delivery time, with offset. Defaults to now.
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+      required:
+        - pickup
+        - dropoff
+        - orderAmountCents
+      additionalProperties: false
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'Problem type. Always `about:blank`: `code` identifies the error.'
+        title:
+          type: string
+          description: HTTP status phrase.
+        status:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          description: HTTP status code.
+        code:
+          type: string
+          description: Stable, machine-readable error code.
+        detail:
+          description: Human-readable explanation of this occurrence.
+          type: string
+        errors:
+          description: Individual validation errors. Only for `VALIDATION_ERROR`.
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Location of the invalid value, e.g. `body.pickup.lat`.
+              message:
+                type: string
+            required:
+              - path
+              - message
+            additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+        - code
+      additionalProperties: false
+      description: Error response (RFC 9457 Problem Details).
+    Coordinates:
+      type: object
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
+      required:
+        - lat
+        - lng
+      additionalProperties: false
+    QuoteBreakdown:
+      type: object
+      properties:
+        baseFeeCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        distanceFeeCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        peakSurchargeCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        discountCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - baseFeeCents
+        - distanceFeeCents
+        - peakSurchargeCents
+        - discountCents
+      additionalProperties: false
+    Quote:
+      type: object
+      properties:
+        quoteId:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        zoneId:
+          type: string
+        distanceMeters:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        breakdown:
+          $ref: '#/components/schemas/QuoteBreakdown'
+        totalCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Base + distance + peak surcharge − discount.
+        currency:
+          type: string
+          const: EUR
+        deliveryAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          description: Delivery time used for the quote, in UTC.
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$
+          description: The quote is valid until this time, in UTC.
+      required:
+        - quoteId
+        - zoneId
+        - distanceMeters
+        - breakdown
+        - totalCents
+        - currency
+        - deliveryAt
+        - expiresAt
+      additionalProperties: false
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        center:
+          $ref: '#/components/schemas/Coordinates'
+        radiusMeters:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        timeZone:
+          type: string
+          description: IANA time zone used for peak hours.
+        baseFeeCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        perKmCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        peakSurchargeCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        freeDeliveryFromCents:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Orders of at least this amount get free delivery.
+      required:
+        - id
+        - name
+        - center
+        - radiusMeters
+        - timeZone
+        - baseFeeCents
+        - perKmCents
+        - peakSurchargeCents
+        - freeDeliveryFromCents
+      additionalProperties: false
+    ZoneList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Zone'
+      required:
+        - items
+      additionalProperties: false

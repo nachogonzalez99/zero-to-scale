@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars and fill in. Not a secret: terraform.tfvars is committed.
+github_owner          = "your-user-or-org"
+repository_visibility = "public"
