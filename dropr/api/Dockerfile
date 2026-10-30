@@ -33,9 +33,6 @@ ARG VERSION=0.0.0-dev
 ARG COMMIT=unknown
 ENV APP_VERSION=$VERSION \
     APP_COMMIT=$COMMIT
-LABEL org.opencontainers.image.version=$VERSION \
-      org.opencontainers.image.revision=$COMMIT \
-      org.opencontainers.image.source=https://github.com/<tu-usuario>/zero-to-scale
 
 # Exec form: node is PID 1 and receives signals directly
 CMD ["node", "src/server.ts"]

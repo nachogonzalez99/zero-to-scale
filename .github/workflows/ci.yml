@@ -24,9 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: pnpm/setup@v3
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e
         with:
           node-version-file: .nvmrc
           require-lockfile: true
@@ -39,10 +39,97 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: pnpm/setup@v3
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e
         with:
           install: false
 
       - run: pnpm audit --audit-level high
+
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write # publish to GHCR, only on pushes to main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: dropr/api/Dockerfile
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Image name, tag (sha-<short commit>) and OCI labels
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/dropr-api
+          tags: type=sha
+
+      # Built once and loaded locally: the image tested below is the one published
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: dropr/api/Dockerfile
+          platforms: linux/amd64
+          build-args: COMMIT=${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: dropr-api:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Image
+        run: |
+          docker run --detach --name api --publish 3000:3000 dropr-api:ci
+
+          # Ready, and reporting the commit it was built from
+          for attempt in $(seq 1 20); do
+            if curl --silent --fail http://localhost:3000/health/ready > ready.json; then break; fi
+            if [ "$attempt" -eq 20 ]; then docker logs api; exit 1; fi
+            sleep 0.5
+          done
+          jq --exit-status --arg commit "$GITHUB_SHA" '.commit == $commit' ready.json
+
+          # Serves the API
+          curl --silent --fail http://localhost:3000/v1/zones > /dev/null
+
+          # Shuts down cleanly on SIGTERM: exit code 0, not 137 (killed)
+          docker stop api
+          exit_code=$(docker inspect api --format '{{.State.ExitCode}}')
+          docker logs api
+          if [ "$exit_code" -ne 0 ]; then
+            echo "::error::Expected a clean shutdown (exit code 0), got $exit_code"
+            exit 1
+          fi
+
+      - name: Scan for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: dropr-api:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          docker tag dropr-api:ci "$TAG"
+          docker push "$TAG"
+          echo "Published \`$TAG\`" >> "$GITHUB_STEP_SUMMARY"
